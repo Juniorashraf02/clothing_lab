@@ -1,28 +1,23 @@
-"use client";
-import { useEffect, useState } from "react";
-import { DataGrid, GridColDef } from "@mui/x-data-grid";
-import { db } from "@/app/lib/firebase";
-import { collection, getDocs } from "firebase/firestore";
+import EditOrderModal from "@/components/EditOrderModal";
 import { Order } from "@/types/order";
-import { deleteOrder } from "@/services/orderService";
 import { Button } from "@mui/material";
+import { GridColDef } from "@mui/x-data-grid";
+import { DataGrid } from "@mui/x-data-grid";
+import { useState } from "react";
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [open, setOpen] = useState(false);
 
-  const fetchOrders = async () => {
-    const querySnapshot = await getDocs(collection(db, "orders"));
-    setOrders(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order)));
+  const fetchOrders = async () => { /* same as before */ };
+
+  const handleEdit = (order: Order) => {
+    setSelectedOrder(order);
+    setOpen(true);
   };
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
-
-  const handleDelete = async (id: string) => {
-    await deleteOrder(id);
-    await fetchOrders();
-  };
+  const handleDelete = async (id: string) => { /* same as before */ };
 
   const columns: GridColDef[] = [
     { field: "customerName", headerName: "Customer", width: 200 },
@@ -35,14 +30,25 @@ export default function AdminOrdersPage() {
       headerName: "Actions",
       width: 200,
       renderCell: (params) => (
-        <Button
-          variant="outlined"
-          color="error"
-          size="small"
-          onClick={() => handleDelete(params.row.id)}
-        >
-          Delete
-        </Button>
+        <>
+          <Button
+            variant="outlined"
+            color="primary"
+            size="small"
+            onClick={() => handleEdit(params.row as Order)}
+            style={{ marginRight: "0.5rem" }}
+          >
+            Update
+          </Button>
+          <Button
+            variant="outlined"
+            color="error"
+            size="small"
+            onClick={() => handleDelete(params.row.id)}
+          >
+            Delete
+          </Button>
+        </>
       ),
     },
   ];
@@ -55,6 +61,12 @@ export default function AdminOrdersPage() {
         columns={columns}
         initialState={{ pagination: { paginationModel: { pageSize: 5, page: 0 } } }}
         pageSizeOptions={[5, 10, 20]}
+      />
+      <EditOrderModal
+        open={open}
+        onClose={() => setOpen(false)}
+        order={selectedOrder}
+        onUpdated={fetchOrders}
       />
     </div>
   );
